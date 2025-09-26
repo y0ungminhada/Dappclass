@@ -5,11 +5,16 @@ struct Question {
   string question;
   string[] options;
 }
+struct Answer {
+  address respondent;
+  uint8[] answers;
+}
 
 contract Survey {
   string public title;
   string public description;
   Question[] questions;
+  Answer[] answers;
 
   // primitive: int, bool, uint
   // memory, storage, calldata
@@ -35,8 +40,21 @@ contract Survey {
       // q.options = _questions[i].options;
     }
   }
+  function submitAnswer(Answer calldata _answer) external {
+    //length validation
+    require(
+      _answer.answers.length == questions.length,
+      "Mismatched answers length"
+    );
+    answers.push(
+      Answer({respondent: _answer.respondent, answers: _answer.answers})
+    );
+  }
+  function getAnswers() external view returns (Answer[] memory) {
+    return answers;
+  }
 
-  function getquestions() external view returns (Question[] memory) {
+  function getQuestions() external view returns (Question[] memory) {
     return questions;
   }
 }

@@ -17,8 +17,9 @@ contract Survey {
   uint256 public rewardAmount;
   Question[] questions;
   Answer[] answers;
+  mapping(address => uint) testMap;
 
-  // primitive: int, bool, uint
+  // primitive: int, bool, uint, address
   // memory, storage, calldata
   constructor(
     string memory _title,
@@ -30,6 +31,7 @@ contract Survey {
     description = _description;
     targetNumber = _targetNumber;
     rewardAmount = msg.value / _targetNumber;
+    testMap[0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199] = 1000;
     for (uint i = 0; i < _questions.length; i++) {
       //version 1
       questions.push(
@@ -45,6 +47,7 @@ contract Survey {
       // q.options = _questions[i].options;
     }
   }
+
   function submitAnswer(Answer calldata _answer) external {
     //length validation
     require(
@@ -57,6 +60,7 @@ contract Survey {
     );
     payable(msg.sender).transfer(rewardAmount);
   }
+
   function getAnswers() external view returns (Answer[] memory) {
     return answers;
   }

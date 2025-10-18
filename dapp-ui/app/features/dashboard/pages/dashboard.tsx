@@ -7,8 +7,8 @@ export async function loader() {
     console.log(data);
 }
 
-export default function Home() {
+export default function Dashboard() {
     return <div>
-        Hello destat world
+        Dashboard
     </div>
 }

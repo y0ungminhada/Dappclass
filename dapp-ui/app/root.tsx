@@ -9,20 +9,28 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import React from "react";
+import Navigation from "./components/ui/navigation";
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+import { createModal } from "@rabby-wallet/rabbykit";
+import { createConfig, http } from "@wagmi/core";
+import { hardhat } from "@wagmi/core/chains";
+
+export const config = createConfig(
   {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+    chains: [hardhat],
+    transports: {
+      [hardhat.id]: http(),
+
+    },
+  }
+);
+
+export const rabbykit = createModal({
+  wagmi: config,
+});
+
+
+
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -44,10 +52,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <>
+    <div className="py-20 px-5">
+      <Navigation />
       <Outlet />
-    </>
-  )
+    </div>
+
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

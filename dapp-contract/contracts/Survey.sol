@@ -17,7 +17,6 @@ contract Survey {
   uint256 public rewardAmount;
   Question[] questions;
   Answer[] answers;
-  mapping(address => uint) testMap;
 
   // primitive: int, bool, uint, address
   // memory, storage, calldata
@@ -31,7 +30,6 @@ contract Survey {
     description = _description;
     targetNumber = _targetNumber;
     rewardAmount = msg.value / _targetNumber;
-    testMap[0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199] = 1000;
     for (uint i = 0; i < _questions.length; i++) {
       //version 1
       questions.push(
@@ -54,7 +52,8 @@ contract Survey {
       _answer.answers.length == questions.length,
       "Mismatched answers length"
     );
-    require(answers.length <= targetNumber, "This survey has been ended");
+    require(answers.length < targetNumber, "This survey has been ended"); // <=이면 오류 테스트를 할 수 없어서 <로 수정
+    // <=이면 목표치에 도달한 제출도 통과해서 보상 전송으로 잔고가 0이 되어서 다른 오류가 나옴
     answers.push(
       Answer({respondent: _answer.respondent, answers: _answer.answers})
     );

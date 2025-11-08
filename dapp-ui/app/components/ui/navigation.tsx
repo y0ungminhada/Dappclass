@@ -65,7 +65,7 @@ export default function Navigation() {
                                     </li>
                                     <li>
                                         <NavigationMenuLink asChild>
-                                            <Link to="/">
+                                            <Link to="/survey/create">
                                                 <div className="text-sm leading-none font-medium">Create Survey</div>
                                                 <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                                                     Create a new survey
@@ -97,7 +97,7 @@ export default function Navigation() {
                                     </li>
                                     <li>
                                         <NavigationMenuLink asChild>
-                                            <Link to="/">
+                                            <Link to="/archive/finished">
                                                 <div className="text-sm leading-none font-medium">Finished Surveys</div>
                                                 <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                                                     List all finished surveys
@@ -129,7 +129,7 @@ export default function Navigation() {
                                     </li>
                                     <li>
                                         <NavigationMenuLink asChild>
-                                            <Link to="/">
+                                            <Link to="/profile/my-surveys">
                                                 <div className="text-sm leading-none font-medium">My surveys</div>
                                                 <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                                                     List all your surveys
@@ -139,7 +139,7 @@ export default function Navigation() {
                                     </li>
                                     <li>
                                         <NavigationMenuLink asChild>
-                                            <Link to="/">
+                                            <Link to="/profile/my-responses">
                                                 <div className="text-sm leading-none font-medium">My responses</div>
                                                 <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                                                     View all your responses

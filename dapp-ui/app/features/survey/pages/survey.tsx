@@ -1,8 +1,16 @@
 import { SendIcon, User2Icon } from "lucide-react"
 import { Form } from "react-router"
 import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card"
 import MessageBubble from "../components/message-bubble"
+import type { Route } from "./+types/survey"
+
+export const action = async ({ request }: Route.ActionArgs) => {//원래는 검증 해야됨
+    const formData = await request.formData();
+    const answers = Object.fromEntries(formData);
+    console.log(Object.values(answers).map(str => Number(str)));
+};
 
 interface Questions {
     question: string;
@@ -61,29 +69,58 @@ export default function Survey() {
                         This is a sample survey. Let's join to get reward!
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="overflow-y-auto h-[70vh]">
-                    <h1 className="text-xl font-semibold pb-4">Survey Progress</h1>
-                    <div className="gap-5 grid grid-cols-2">
-                        {
-                            questions.map((q, i) => (
-                                <div className="flex flex-col  ">
-                                    <h1 className="font-bold ">{q.question}</h1>
-                                    <div className="flex flex-col pl-2 gap-1">
-                                        {q.options.map((o, j) => (
-                                            <div className="flex flex-row justify-center items-center relative">
-                                                <div className="absolute left-2 text-xs font-semibold ">{o}</div>
-                                                <div className="w-full h-5 bg-gray-200 rounded-full" >
-                                                    <div className="bg-primary/30 w-7 h-5 rounded-full" ></div>
+                {true ? (
+                    <CardContent className="overflow-y-auto h-[70vh]">
+                        <h1 className="text-xl font-semibold pb-4">Survey Progress</h1>
+                        <div className="gap-5 grid grid-cols-2">
+                            {
+                                questions.map((q, i) => (
+                                    <div className="flex flex-col  ">
+                                        <h1 className="font-bold ">{q.question}</h1>
+                                        <div className="flex flex-col pl-2 gap-1">
+                                            {q.options.map((o, j) => (
+                                                <div className="flex flex-row justify-center items-center relative">
+                                                    <div className="absolute left-2 text-xs font-semibold ">{o}</div>
+                                                    <div className="w-full h-5 bg-gray-200 rounded-full" >
+                                                        <div className="bg-primary/30 w-7 h-5 rounded-full" ></div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                            ))
-                        }
-                    </div>
-                </CardContent>
+                                ))
+                            }
+                        </div>
+                    </CardContent>
+                ) : (
+                    <CardContent>
+                        <Form method="post" className="grid grid-cols-2">
+                            {questions.map((q, i) => (
+                                <div className="flex flex-col">
+                                    <span className="mt-3 mb-1">{q.question}</span>
+                                    {q.options.map((o, j) => (
+                                        <label className="flex items-center gap-1">
+                                            <Input
+                                                type="radio"
+                                                name={i.toString()}
+                                                value={j.toString()}
+                                                className="hidden peer"
+                                            ></Input>
+                                            <span
+                                                className="w-4 h-4 rounded-full border-2 
+                                                               peer-checked:bg-primary"
+                                            ></span>
+                                            <span className="font-semibold">{o}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            ))}
+                            <Button type="submit" className="w-full mt-5">Submit</Button>
+                        </Form>
+                    </CardContent>
+                )
+                }
             </Card>
             <Card className="col-span-1 ">
                 <CardHeader>
@@ -108,4 +145,4 @@ export default function Survey() {
             </Card>
         </div>
     )
-}
+} 

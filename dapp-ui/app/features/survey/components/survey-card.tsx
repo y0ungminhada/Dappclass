@@ -11,7 +11,7 @@ export default function SurveyCard() {
                     <div className="flex flex-row justify-between items-center">
                         <CardTitle>Sample Survey</CardTitle>
                         <div className="flex flex-row gap-2">
-                            <div className="flex flex-row text-xs gap-0.5">
+                            <div className="flex flex-row text-xs gap-0.5 ">
                                 <EyeIcon size={17} /> 1600
                             </div>
                             <div className="flex flex-row text-xs gap-0.5">

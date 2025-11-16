@@ -9,11 +9,14 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import Navigation from "./components/ui/navigation";
+import Navigation from "./components/navigation";
 
 import { createModal } from "@rabby-wallet/rabbykit";
 import { createConfig, http } from "@wagmi/core";
 import { hardhat } from "@wagmi/core/chains";
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WagmiProvider } from 'wagmi'
 
 export const config = createConfig(
   {
@@ -29,7 +32,7 @@ export const rabbykit = createModal({
   wagmi: config,
 });
 
-
+const queryClient = new QueryClient()
 
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -52,9 +55,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="py-20 px-20 h-screen">
-      <Navigation />
-      <Outlet />
+    <div className=" py-20 px-20 h-screen">
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <Navigation />
+          <Outlet />
+        </QueryClientProvider>
+      </WagmiProvider>
+
     </div>
 
   );

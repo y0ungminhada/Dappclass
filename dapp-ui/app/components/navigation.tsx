@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router"
 import { Button } from "~/components/ui/button"
 import { rabbykit } from "~/root"
+import WalletButton from "./wallet-button";
 // - navigation
 //      -Dashboard
 //      -Survey
@@ -31,7 +32,7 @@ export default function Navigation() {
                     <NavigationMenuList>
                         <NavigationMenuItem>
                             <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                                <Link to="/dashboard">Dashboard</Link>
+                                <Link to="/">Dashboard</Link>
                             </NavigationMenuLink>
                         </NavigationMenuItem>
                         <NavigationMenuItem>
@@ -152,7 +153,7 @@ export default function Navigation() {
                         </NavigationMenuItem>
                     </NavigationMenuList>
                 </NavigationMenu>
-                <Button onClick={() => rabbykit.open()}>Connect Wallet</Button>
+                <WalletButton />
             </div>
         </nav>
     );

@@ -4,17 +4,23 @@ import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "~/com
 import { Input } from "~/components/ui/input";
 import type { Route } from "./+types/create-survey";
 import { useState } from "react";
+import { useWriteContract } from "wagmi";
+import { parseEther } from "viem";
+import { SURVEY_FACTORY, SURVEY_FACTORY_ABI } from "../constant";
 
-export const action = async ({ request }: Route.ActionArgs) => {
-    const formData = await request.formData();
 
-    console.log(formData);
-};
+//backend 실행
+// export const action = async ({ request }: Route.ActionArgs) => {
+//     const formData = await request.formData();
+
+//     console.log(formData);
+// };
 
 //
 export default function CreateSurvey() {
     const [options, setOptions] = useState([1]);
     const [image, setImage] = useState("");
+    const { writeContract } = useWriteContract()
 
     const uploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -42,6 +48,45 @@ export default function CreateSurvey() {
         setOptions(options.map((o, j) => j === i ? o - 1 : o));
     }
 
+    interface Questions {
+        question: string;
+        options: string[];
+    }
+
+    const createSurvey = (e: React.FormEvent<HTMLFormElement>) => {
+
+        const formData = new FormData(e.currentTarget);
+        const questionsData = formData.getAll("q") as string[];
+        const questions = questionsData.map((q, i) => {
+            const options = formData.getAll(i.toString()) as string[];
+            return {
+                question: q,
+                options
+            } as const;
+
+        });
+        const title = formData.get("title") as string;
+        const description = formData.get("description") as string;
+        const targetNumber = formData.get("target") as string;
+        const poolSize = formData.get("pool") as string;
+
+        writeContract({
+            address: SURVEY_FACTORY,
+            abi: SURVEY_FACTORY_ABI,
+            functionName: "createSurvey",
+            args: [
+                {
+                    title,
+                    description,
+                    targetNumber: BigInt(targetNumber),
+                    questions
+                },
+            ],
+            value: parseEther(poolSize),
+        });
+    };
+
+
     return (
         <div className="flex justify-center w-full">
             <Card className="w-full max-w-xl">
@@ -52,7 +97,7 @@ export default function CreateSurvey() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Form method="post" encType="multipart/form-data">
+                    <Form onSubmit={(e) => createSurvey(e)} encType="multipart/form-data">
                         <label className="flex flex-col mb-2">
                             <h1 className="font-bold">Title</h1>
                             <Input type="text" name="title" />
@@ -60,6 +105,14 @@ export default function CreateSurvey() {
                         <label className="flex flex-col mb-2">
                             <h1 className="font-bold">Description</h1>
                             <Input type="text" name="description" />
+                        </label>
+                        <label className="flex flex-col mb-2">
+                            <h1 className="font-bold">Target Number</h1>
+                            <Input type="number" name="target" />
+                        </label>
+                        <label className="flex flex-col mb-2">
+                            <h1 className="font-bold">Reward Pool Size</h1>
+                            <Input type="number" name="pool" placeholder="e.g. 50(ETH)" />
                         </label>
                         <h1 className="font-bold">Questions</h1>
                         {options.map((n, i) =>

@@ -1,0 +1,43 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-502a73829489317da7ca64f8ffd1dbe4e67b52db",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/SurveyFactory.sol": "project/contracts/SurveyFactory.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": [],
+      "viaIR": true
+    },
+    "sources": {
+      "project/contracts/Survey.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\nstruct Question {\n  string question;\n  string[] options;\n}\nstruct Answer {\n  address respondent;\n  uint8[] answers;\n}\n\ncontract Survey {\n  string public title;\n  string public description;\n  uint256 public targetNumber;\n  uint256 public rewardAmount;\n  Question[] questions;\n  Answer[] answers;\n\n  // primitive: int, bool, uint, address\n  // memory, storage, calldata\n  constructor(\n    string memory _title,\n    string memory _description,\n    uint256 _targetNumber,\n    Question[] memory _questions\n  ) payable {\n    title = _title;\n    description = _description;\n    targetNumber = _targetNumber;\n    rewardAmount = msg.value / _targetNumber;\n    for (uint i = 0; i < _questions.length; i++) {\n      //version 1\n      questions.push(\n        Question({\n          question: _questions[i].question,\n          options: _questions[i].options\n        })\n      );\n\n      //version 2\n      // Question storage q = questions.push();\n      // q.question = _questions[i].question;\n      // q.options = _questions[i].options;\n    }\n  }\n\n  function submitAnswer(Answer calldata _answer) external {\n    //length validation\n    require(\n      _answer.answers.length == questions.length,\n      \"Mismatched answers length\"\n    );\n    require(answers.length < targetNumber, \"This survey has been ended\"); // <=이면 오류 테스트를 할 수 없어서 <로 수정\n    // <=이면 목표치에 도달한 제출도 통과해서 보상 전송으로 잔고가 0이 되어서 다른 오류가 나옴\n    answers.push(\n      Answer({respondent: _answer.respondent, answers: _answer.answers})\n    );\n    payable(msg.sender).transfer(rewardAmount);\n  }\n\n  function getAnswers() external view returns (Answer[] memory) {\n    return answers;\n  }\n\n  function getQuestions() external view returns (Question[] memory) {\n    return questions;\n  }\n}\n"
+      },
+      "project/contracts/SurveyFactory.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\nimport \"./Survey.sol\";\n\nstruct SurveySchema {\n  string title;\n  string description;\n  uint256 targetNumber;\n  Question[] questions;\n}\nevent SurveyCreated(address);\n\ncontract SurveyFactory {\n  uint256 min_pool_amouont;\n  uint256 min_reward_amount;\n\n  Survey[] surveys;\n  // pool amount = 50eht\n  //target respondents number = 100\n  // reward amount = 50eth / 100 = 0.5eth\n  constructor(uint256 _min_pool_amouont, uint256 _min_reward_amount) {\n    min_pool_amouont = _min_pool_amouont; //survey 만들기 위해최소 예치 금약\n    min_reward_amount = _min_reward_amount; // 설문 참여자에게 주는 최소 보상 금액\n  }\n\n  function createSurvey(SurveySchema calldata _survey) external payable {\n    require(msg.value >= min_pool_amouont, \"Insufficient pool amount\");\n    require(\n      msg.value / _survey.targetNumber >= min_reward_amount,\n      \"Insufficient reward amount\"\n    );\n\n    Survey survey = new Survey{value: msg.value}(\n      _survey.title,\n      _survey.description,\n      _survey.targetNumber,\n      _survey.questions\n    );\n    surveys.push(survey);\n    emit SurveyCreated(address(survey));\n  }\n  function getSurveys() external view returns (Survey[] memory) {\n    return surveys;\n  }\n}\n"
+      }
+    }
+  }
+}

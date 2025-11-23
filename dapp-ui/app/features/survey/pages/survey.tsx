@@ -4,7 +4,12 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card"
 import MessageBubble from "../components/message-bubble"
+import { useEffect, useState } from "react"
 import type { Route } from "./+types/survey"
+import { useAccount, useReadContract, useWriteContract } from "wagmi"
+import { SURVEY_ABI } from "../constant"
+
+
 
 export const action = async ({ request }: Route.ActionArgs) => {//원래는 검증 해야됨
     const formData = await request.formData();
@@ -59,44 +64,128 @@ const questions: Questions[] = [
     },
 ]
 
-export default function Survey() {
+export default function Survey({ params }: Route.ComponentProps) {
+    const { data: questions } = useReadContract({
+        address: params.surveyId as `0x${string}`,
+        abi: SURVEY_ABI,
+        functionName: 'getQuestions',
+        args: [],
+    });
+
+    const { data: title } = useReadContract({
+        address: params.surveyId as `0x${string}`,
+        abi: SURVEY_ABI,
+        functionName: 'title',
+        args: [],
+    });
+    const { data: description } = useReadContract({
+        address: params.surveyId as `0x${string}`,
+        abi: SURVEY_ABI,
+        functionName: 'description',
+        args: [],
+    });
+    const { writeContract } = useWriteContract();
+    const { address } = useAccount();
+    const submitAnswer = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!address) {
+            alert("Please connect your wallet");
+            return
+        };
+        const formData = new FormData(e.currentTarget);
+        const answers: number[] = [];
+        for (const value of formData.values()) {
+            answers.push(Number(value));
+        }
+        await writeContract({
+            address: params.surveyId as `0x${string}`,
+            abi: SURVEY_ABI,
+            functionName: 'submitAnswer',
+            args: [{
+                respondent: address,
+                answers
+            }],
+        });
+        // After successful write, show results and compute counts
+        setCounts(countAnswers() || []);
+        setIsAnswered(true);
+    };
+    const { data: answers } = useReadContract({
+        address: params.surveyId as `0x${string}`,
+        abi: SURVEY_ABI,
+        functionName: 'getAnswers',
+        args: [],
+    });
+    const { data: target } = useReadContract({
+        address: params.surveyId as `0x${string}`,
+        abi: SURVEY_ABI,
+        functionName: 'targetNumber',
+        args: [],
+    });
+    const [counts, setCounts] = useState<number[][]>([]);
+    const [isAnswered, setIsAnswered] = useState(false);
+
+    const countAnswers = () => {
+        if (!target) return;
+        return questions?.map((q, i) => {
+            const count = Array.from({ length: q.options.length }).fill(0) as number[];
+            answers?.map((answer) => count[answer.answers[i]]++);
+            // return count;
+            return count.map((n) => (n / Number(target)) * 100);
+        });
+    };
+    useEffect(() => {
+        if (!answers || !questions || !address) { return };
+        for (const answer of answers) {
+            if (answer.respondent === address) {
+                setCounts(countAnswers() || []);
+                setIsAnswered(true);
+                return;
+            }
+        }
+    }, [answers, address, target]);
+
     return (
-        <div className="grid grid-cols-3 w-screen gap-3">
+        <div className="container mx-auto px-6 grid grid-cols-3 gap-3">
             <Card className="col-span-2">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-extrabold">Sample Survey </CardTitle>
+                    <CardTitle className="text-3xl font-extrabold">
+                        {title}
+                    </CardTitle>
                     <CardDescription>
-                        This is a sample survey. Let's join to get reward!
+                        {description}
                     </CardDescription>
                 </CardHeader>
-                {true ? (
+                {isAnswered ? (
                     <CardContent className="overflow-y-auto h-[70vh]">
                         <h1 className="text-xl font-semibold pb-4">Survey Progress</h1>
                         <div className="gap-5 grid grid-cols-2">
-                            {
-                                questions.map((q, i) => (
-                                    <div className="flex flex-col  ">
-                                        <h1 className="font-bold ">{q.question}</h1>
-                                        <div className="flex flex-col pl-2 gap-1">
-                                            {q.options.map((o, j) => (
-                                                <div className="flex flex-row justify-center items-center relative">
-                                                    <div className="absolute left-2 text-xs font-semibold ">{o}</div>
-                                                    <div className="w-full h-5 bg-gray-200 rounded-full" >
-                                                        <div className="bg-primary/30 w-7 h-5 rounded-full" ></div>
+                            {questions?.map((q, i) => (
+                                <div className="flex flex-col  ">
+                                    <h1 className="font-bold ">{q.question}</h1>
+                                    <div className="flex flex-col pl-2 gap-1">
+                                        {q.options.map((o, j) => (
+                                            <div className="flex flex-row justify-center items-center relative">
+                                                <div className="absolute left-2 text-xs font-semibold ">{o}</div>
+                                                <div className="w-full h-5 bg-gray-200 rounded-full" >
+                                                    <div
+                                                        className="bg-primary/40  h-5 rounded-full overflow-hidden"
+                                                        style={{ width: `${counts[i][j]}%` }} >
+
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                ))
-                            }
+                            ))}
                         </div>
                     </CardContent>
                 ) : (
                     <CardContent>
-                        <Form method="post" className="grid grid-cols-2">
-                            {questions.map((q, i) => (
+                        <Form onSubmit={submitAnswer} className="grid grid-cols-2">
+                            {questions?.map((q, i) => (
                                 <div className="flex flex-col">
                                     <span className="mt-3 mb-1">{q.question}</span>
                                     {q.options.map((o, j) => (
@@ -119,8 +208,7 @@ export default function Survey() {
                             <Button type="submit" className="w-full mt-5">Submit</Button>
                         </Form>
                     </CardContent>
-                )
-                }
+                )}
             </Card>
             <Card className="col-span-1 ">
                 <CardHeader>

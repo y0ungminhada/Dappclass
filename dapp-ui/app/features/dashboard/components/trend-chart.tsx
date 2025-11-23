@@ -68,7 +68,7 @@ export function TrendChart({
                             tickLine={false}
                             axisLine={false}
                             tickMargin={8}
-                            tickFormatter={(value) => value.slice(5)}
+                            tickFormatter={(value) => value.slice(5 )}
                         />
                         <ChartTooltip
                             cursor={false}

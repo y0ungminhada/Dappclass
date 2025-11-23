@@ -27,7 +27,7 @@ export default function TrendCard({
                         {trendMessage} <TrendingUpIcon className="size-4" />
                     </div>
                     <div className="text-muted-foreground">
-                        {periodMessage}
+                        {periodMessage }
                     </div>
                 </CardFooter>
             </Card>

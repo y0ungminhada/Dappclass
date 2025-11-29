@@ -3,24 +3,51 @@ import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import type { Route } from "./+types/create-survey";
-import { useState } from "react";
-import { useWriteContract } from "wagmi";
-import { parseEther } from "viem";
+import { useEffect, useState } from "react";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { decodeEventLog, parseEther } from "viem";
 import { SURVEY_FACTORY, SURVEY_FACTORY_ABI } from "../constant";
+import { supabase } from "~/postgres/supaclient";
 
 
 //backend 실행
-// export const action = async ({ request }: Route.ActionArgs) => {
-//     const formData = await request.formData();
+export const action = async ({ request }: Route.ActionArgs) => {
+    const formData = await request.formData();
+    const metadata = JSON.parse(formData.get("metadata") as string);
+    console.log(metadata);
+    const imageFile = formData.get("image") as File;
 
-//     console.log(formData);
-// };
+    const { data, error } = await supabase.storage
+        .from("images")
+        .upload(metadata.id, imageFile);
+    if (!error) {
+        const publicUrl = await supabase.storage
+            .from("images")
+            .getPublicUrl(data.path);
+        await supabase.from("survey").insert({
+            id: metadata.id,
+            title: metadata.title,
+            description: metadata.description,
+            target_number: metadata.targetNumber,
+            reward_amount: metadata.rewardAmount,
+            image: publicUrl.data.publicUrl,
+            questions: metadata.questions,
+            owner: metadata.owner,
+        })
+    }
+};
 
 //
 export default function CreateSurvey() {
     const [options, setOptions] = useState([1]);
     const [image, setImage] = useState("");
-    const { writeContract } = useWriteContract()
+    const [formImage, setFormImage] = useState<File>();
+    const { data: hash, writeContract } = useWriteContract();
+    const { data: receipt, isFetched } = useWaitForTransactionReceipt({
+        hash,
+    });
+    const [surveyMeta, setSurveyMeta] = useState({});
+    const { address } = useAccount();
 
     const uploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -31,27 +58,27 @@ export default function CreateSurvey() {
             };
             reader.readAsDataURL(file);
         }
-    }
+    };
 
     const addQuestion = () => {
         setOptions([...options, 1]);
-    }
+    };
     const deleteQuestion = () => {
         if (options.length <= 1) return; //question은 최소 1개 이상이어야 함
         setOptions(options.slice(0, options.length - 1));
-    }
+    };
     const addOption = (i: number) => {
         setOptions(options.map((o, j) => j === i ? o + 1 : o));
-    }
+    };
     const deleteOption = (i: number) => {
         if (options[i] <= 1) return; //option은 최소 1개 이상이어야 함
         setOptions(options.map((o, j) => j === i ? o - 1 : o));
-    }
+    };
 
     interface Questions {
         question: string;
         options: string[];
-    }
+    };
 
     const createSurvey = (e: React.FormEvent<HTMLFormElement>) => {
 
@@ -69,6 +96,8 @@ export default function CreateSurvey() {
         const description = formData.get("description") as string;
         const targetNumber = formData.get("target") as string;
         const poolSize = formData.get("pool") as string;
+        const formImg = formData.get("image") as File;
+        setFormImage(formImg);
 
         writeContract({
             address: SURVEY_FACTORY,
@@ -84,7 +113,44 @@ export default function CreateSurvey() {
             ],
             value: parseEther(poolSize),
         });
+        setSurveyMeta({
+            title,
+            description,
+            targetNumber,
+            rewardAmount: Number(poolSize) / Number(targetNumber),
+            questions,
+            owner: address,
+        });
     };
+    useEffect(() => {
+        if (!isFetched || !receipt || !formImage) return;
+        const callAction = async () => {
+            let contractAddress;
+            for (const log of receipt?.logs) {
+                const event = decodeEventLog({
+                    abi: SURVEY_FACTORY_ABI,
+                    data: log.data,
+                    topics: log.topics,
+                })
+                if (event.eventName === "SurveyCreated") {
+                    contractAddress = event.args[0];
+                }
+
+            }
+            const formData = new FormData();
+            const newSurveyMeta = {
+                ...surveyMeta,
+                id: contractAddress,
+            };
+            formData.append("metadata", JSON.stringify(newSurveyMeta));
+            formData.append("image", formImage);
+            await fetch("/survey/create", {
+                method: "post",
+                body: formData,
+            });
+        };
+        callAction();
+    }, [receipt]);
 
 
     return (
@@ -97,7 +163,10 @@ export default function CreateSurvey() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Form onSubmit={(e) => createSurvey(e)} encType="multipart/form-data">
+                    <Form
+                        onSubmit={(e) => createSurvey(e)}
+                        encType="multipart/form-data"
+                    >
                         <label className="flex flex-col mb-2">
                             <h1 className="font-bold">Title</h1>
                             <Input type="text" name="title" />
@@ -116,13 +185,14 @@ export default function CreateSurvey() {
                         </label>
                         <h1 className="font-bold">Questions</h1>
                         {options.map((n, i) =>
-                            <div className="mb-4">
+                            <div className="mb-4" key={`question-${i}`}>
                                 <Input type="text" placeholder="Question" name="q" />
                                 <div>
                                     {Array.from({ length: n }).map((_, j) => (
-                                        <div className="flex  items-center ">
+                                        <div className="flex  items-center " key={`question-${i}-option-${j}`}>
                                             {j == n - 1 && j != 0 ? (
                                                 <Button
+                                                    type="button"
                                                     onClick={() => deleteOption(i)}
                                                     className="w-8 h-8 rounded-full mr-1 bg-red-200"
                                                 >
@@ -140,6 +210,7 @@ export default function CreateSurvey() {
                                             />
                                             {j == n - 1 && (
                                                 <Button
+                                                    type="button"
                                                     onClick={() => addOption(i)}
                                                     className="w-8 h-8 rounded-full ml-1 bg-gray-300"
                                                 >
@@ -157,12 +228,14 @@ export default function CreateSurvey() {
 
                         <div className="flex items-center justify-center mb-4">
                             <Button
+                                type="button"
                                 onClick={() => deleteQuestion()}
                                 className="w-8 h-8 rounded-full mr-1 bg-red-200"
                             >
                                 -
                             </Button>
                             <Button
+                                type="button"
                                 onClick={() => addQuestion()}
                                 className="w-8 h-8 rounded-full mr-1 bg-gray-200"
                             >

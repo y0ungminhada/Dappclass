@@ -15,6 +15,34 @@
       "when": 1764407717329,
       "tag": "0001_gorgeous_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764726211362,
+      "tag": "0002_worthless_the_twelve",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764726989624,
+      "tag": "0003_cuddly_the_santerians",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764728146574,
+      "tag": "0004_simple_scream",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764730928874,
+      "tag": "0005_long_purifiers",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,9 @@
+import "dotenv/config";
 import type { HardhatUserConfig } from "hardhat/config";
 
 import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import { configVariable } from "hardhat/config";
+
 
 const config: HardhatUserConfig = {
   plugins: [hardhatToolboxMochaEthersPlugin],
@@ -36,6 +38,12 @@ const config: HardhatUserConfig = {
       chainType: "l1",
       url: configVariable("SEPOLIA_RPC_URL"),
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
+    },
+    kairos: {
+      type: "http",
+      chainType: "l1",
+      url: "https://public-en-kairos.node.kaia.io",
+      accounts: [configVariable("KAIROS_PRIVATE_KEY")],
     },
   },
 };

@@ -14,7 +14,6 @@ import { supabase } from "~/postgres/supaclient";
 export const action = async ({ request }: Route.ActionArgs) => {
     const formData = await request.formData();
     const metadata = JSON.parse(formData.get("metadata") as string);
-    console.log(metadata);
     const imageFile = formData.get("image") as File;
 
     const { data, error } = await supabase.storage

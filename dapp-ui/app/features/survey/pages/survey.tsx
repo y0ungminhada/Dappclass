@@ -8,8 +8,30 @@ import { useEffect, useState } from "react"
 import type { Route } from "./+types/survey"
 import { useAccount, useReadContract, useWriteContract } from "wagmi"
 import { SURVEY_ABI } from "../constant"
+import { supabase } from "~/postgres/supaclient"
 
 
+export const loader = async ({ params }: Route.LoaderArgs) => {
+    if (!params.surveyId) return null;
+    const { data, error: selectError } = await supabase
+        .from("survey")
+        .select("view")
+        .eq("id", params.surveyId)
+        .maybeSingle();
+    if (selectError) {
+        console.error("view counter read failed", selectError);
+        return null;
+    }
+    const nextView = (data?.view ?? 0) + 1;
+    const { error: updateError } = await supabase
+        .from("survey")
+        .update({ view: nextView })
+        .eq("id", params.surveyId);
+    if (updateError) {
+        console.error("view counter update failed", updateError);
+    }
+    return null;
+};
 
 export const action = async ({ request }: Route.ActionArgs) => {//원래는 검증 해야됨
     const formData = await request.formData();

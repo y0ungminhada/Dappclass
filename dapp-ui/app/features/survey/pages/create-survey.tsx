@@ -15,6 +15,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const formData = await request.formData();
     const metadata = JSON.parse(formData.get("metadata") as string);
     const imageFile = formData.get("image") as File;
+    console.log(metadata);
 
     const { data, error } = await supabase.storage
         .from("images")

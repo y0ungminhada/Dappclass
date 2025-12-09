@@ -13,20 +13,37 @@ import Navigation from "./components/navigation";
 
 import { createModal } from "@rabby-wallet/rabbykit";
 import { createConfig, http } from "@wagmi/core";
+import type { Chain } from "viem";
 import { hardhat } from "@wagmi/core/chains";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
 
-export const config = createConfig(
-  {
-    chains: [hardhat],
-    transports: {
-      [hardhat.id]: http(),
-
+const kaiaTestnet: Chain = {
+  id: 1001,
+  name: "Kaia Testnet",
+  nativeCurrency: {
+    name: "Kaia",
+    symbol: "KAIA",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://public-en-kairos.node.kaia.io"],
     },
-  }
-);
+    public: {
+      http: ["https://public-en-kairos.node.kaia.io"],
+    },
+  },
+  testnet: true,
+};
+
+export const config = createConfig({
+  chains: [kaiaTestnet],
+  transports: {
+    [kaiaTestnet.id]: http("https://public-en-kairos.node.kaia.io"),
+  },
+});
 
 export const rabbykit = createModal({
   wagmi: config,

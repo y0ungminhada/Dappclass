@@ -20,7 +20,7 @@ export default function SurveyCard({
 }) {
     return (
         <Link to={`/survey/${address}`} >
-            <Card className="max-w-92 ">
+            <Card className="max-w-92">
                 <CardHeader>
                     <div className="flex flex-row justify-between items-center">
                         <CardTitle>{title}</CardTitle>
@@ -40,7 +40,7 @@ export default function SurveyCard({
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <img className="rounded-2xl" src={image} />
+                    <img className="rounded-2xl h-85 w-85 object-cover" src={image} />
                 </CardContent>
                 <CardFooter>
                     <Button className="w-full">

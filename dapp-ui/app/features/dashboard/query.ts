@@ -20,9 +20,10 @@ export const getNumberData = async (
         const lastWeekCount = lastWeek.reduce((sum, value) => sum + value.count, 0);
         const thisWeekCount = thisWeek.reduce((sum, value) => sum + value.count, 0);
 
+        const trend = ((thisWeekCount / (lastWeekCount || 1)) * 100).toFixed(2);
         return {
             value: thisWeekCount.toString(),
-            trendValue: ((thisWeekCount / (lastWeekCount || 1)) * 100).toString(),
+            trendValue: trend,
             upAndDown: thisWeekCount > lastWeekCount,
         };
     } else {
